@@ -120,16 +120,16 @@ def cgmrrdgetdata():
 
     # Dump all host data
 
-    # with open("cgmhostsdata.json", "w") as file:
-    #     json.dump(cgmhosts, file, cls=Encoder)
-    # file.close()
+    #with open("cgmhostsdata.json", "w") as file:
+    #    json.dump(cgmhosts, file, cls=Encoder)
+    #file.close()
 
     for host in cgmhosts['hosts']:
         i = 0
 
         if host['is hashing']:
             for device in host['Devs']['DEVS']:
-                if device['MHS 5s'] > 0:
+                if (device['Memory Clock'] > 800 and device['Status'] == 'Alive'):
                     device['is hashing'] = True
                 else:
                     print("Host " + host['hostname'] + ":" + host['port'] + ", device not working: GPU" + str(i))
@@ -331,12 +331,12 @@ def cgmrrdgetdata():
                     exit(1)
 
                 if len(dashhost) == 1:
-                    htmldoc2.tr(html.td([u"Name", dashhost[0]['name']]))
-                    htmldoc2.tr(html.td([u"IP-Port", dashhost[0]['CgminerAPI'].host + u"-" + str(dashhost[0]['CgminerAPI'].port)]))
+                    htmldoc2.tr(html.td([u"IP", dashhost[0]['name']]))
+#                    htmldoc2.tr(html.td([u"IP-Port", dashhost[0]['CgminerAPI'].host + u"-" + str(dashhost[0]['CgminerAPI'].port)]))
 
                     if 'Summary' in dashhost[0]:
                         htmldoc2.tr(html.td([u"Uptime", u"{0}w {1}d {2}h {3}m {4}s".format(*second2weekdayhourminsec(int(dashhost[0]['Summary']['SUMMARY'][0]['Elapsed'])))]))
-                        htmldoc2.tr(html.td([u"kH/s", str(1000.0 * dashhost[0]['Summary']['SUMMARY'][0]['MHS 5s'])]))
+#                        htmldoc2.tr(html.td([u"Total MH", str(1000.0 * dashhost[0]['Summary']['SUMMARY'][0]['Total MH'])]))
 
                         dashhwerr = dashhost[0]['Summary']['SUMMARY'][0]['Hardware Errors']
                         if dashhwerr > dashhwerrhigh:
@@ -346,21 +346,21 @@ def cgmrrdgetdata():
 
                         htmldoc2.tr(html.td([u"HW_Errors", str(dashhwerr)], class_=dashclass))
 
-                        dashrej = dashhost[0]['Summary']['SUMMARY'][0]['Pool Rejected%']
+                        dashrej = dashhost[0]['Summary']['SUMMARY'][0]['Difficulty Rejected'] / ( 1 + dashhost[0]['Summary']['SUMMARY'][0]['Difficulty Rejected'] + dashhost[0]['Summary']['SUMMARY'][0]['Difficulty Accepted'] )
+
                         if dashrej > dashrejecthigh:
                             dashclass = u"rej"
                         else:
                             dashclass = u""
 
-                        htmldoc2.tr(html.td([u"Pool_Rej%", str(dashrej)], class_=dashclass))
-                        htmldoc2.tr(html.td([u"Dev_Rej%", str(dashhost[0]['Summary']['SUMMARY'][0]['Device Rejected%'])]))
-                        htmldoc2.tr(html.td([u"Blocks", str(dashhost[0]['Summary']['SUMMARY'][0]['Found Blocks'])]))
+ #                      htmldoc2.tr(html.td([u"Pool_Rej%", str(dashrej)], class_=dashclass))
+ #                      htmldoc2.tr(html.td([u"Blocks", str(dashhost[0]['Summary']['SUMMARY'][0]['Found Blocks'])]))
                         htmldoc2.tr(html.td([u"Utility", str(dashhost[0]['Summary']['SUMMARY'][0]['Utility'])]))
 
                         htmldoc2.tr()
                         htmldoc2.td(colspan=2)
                         htmldoc2.table(class_=u'gpu')
-                        htmldoc2.thead(html.tr(html.td([u"Device", u"Temper", u"Fan", u"kH/s"])))
+                        htmldoc2.thead(html.tr(html.td([u"Device", u"Temper", u"Fan", u"kH/s", u"Acc", u"Rej", u"Clk", u"Mem", u"Vol"])))
                         htmldoc2.tbody()
 
                         if dashhost[0]['is hashing']:
@@ -377,6 +377,11 @@ def cgmrrdgetdata():
                                     htmldoc2.td(str(dashtem) + u"C", class_=dashclass)
                                     htmldoc2.td(str(g['Fan Speed']))
                                     htmldoc2.td(str(1000.0 * g['MHS 5s']))
+				    htmldoc2.td(str(g['Difficulty Accepted']))
+				    htmldoc2.td(str(g['Difficulty Rejected']))
+				    htmldoc2.td(str(g['GPU Clock']))
+				    htmldoc2.td(str(g['Memory Clock']))
+				    htmldoc2.td(str(g['GPU Voltage']))
                                     htmldoc2.tr.close()
                                 else:
                                     htmldoc2.tr(html.td(u'GPU DEAD!', class_=u"hitemp", colspan=4))
